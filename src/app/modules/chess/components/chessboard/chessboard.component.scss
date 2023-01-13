@@ -1,0 +1,24 @@
+:host {
+  border: 1px solid black;
+  display: grid;
+  grid-template-columns: repeat(8, 100px);
+  grid-template-rows: repeat(8, 100px);
+
+  chessfield {
+    @mixin fieldStyle {
+      background-color: black;
+    } 
+
+    @for $i from 0 through 3 {
+
+      &:nth-child(n + #{8 * 2 * $i + 1}):nth-child(-n + #{8 * ($i * 2 + 1)}):nth-child(even) {
+        @include fieldStyle;
+      }
+      
+      &:nth-child(n + #{8 * ($i * 2 + 1)}):nth-child(-n + #{8 * ($i * 2 + 2)}):nth-child(odd) {
+        @include fieldStyle;
+      }
+
+    } 
+  }
+}
