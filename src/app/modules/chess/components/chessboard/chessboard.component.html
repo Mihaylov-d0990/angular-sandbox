@@ -1,4 +1,5 @@
 <chessfield
   *ngFor="let field of fields"
+  (click)="clickField(field.id)"
   [data]="field"
 ></chessfield>

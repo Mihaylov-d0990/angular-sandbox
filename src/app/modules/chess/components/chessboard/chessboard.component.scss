@@ -1,12 +1,12 @@
 :host {
   border: 1px solid black;
   display: grid;
-  grid-template-columns: repeat(8, 100px);
-  grid-template-rows: repeat(8, 100px);
+  grid-template-columns: repeat(8, 80px);
+  grid-template-rows: repeat(8, 80px);
 
   chessfield {
     @mixin fieldStyle {
-      background-color: black;
+      background-color: rgb(54, 54, 54);
     } 
 
     @for $i from 0 through 3 {

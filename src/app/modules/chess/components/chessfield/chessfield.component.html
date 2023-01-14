@@ -1,0 +1,6 @@
+<img
+  *ngIf="data.piece"
+  draggable="false"
+  [src]="'assets/images/chess/' + data.piece.color + '_' + data.piece.type + '.png'"
+  [title]="data.piece.color + ' ' + data.piece.type"
+>

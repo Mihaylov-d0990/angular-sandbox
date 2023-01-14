@@ -15,4 +15,8 @@ export class ChessboardComponent implements OnInit {
     console.log({fields: this.fields});
   }
 
+  public clickField(fieldID: number) {
+    console.log({fieldID});
+  }
+
 }
