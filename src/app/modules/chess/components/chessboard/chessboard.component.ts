@@ -1,4 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { ChessService } from '../../services/chess.service';
 import { Field } from '../../types/types';
 
 @Component({
@@ -7,16 +9,20 @@ import { Field } from '../../types/types';
   styleUrls: ['./chessboard.component.scss']
 })
 export class ChessboardComponent implements OnInit {
-  @Input() fields: Field[] = [];
+  public fields$: BehaviorSubject<Field[]>;
+  public allowedMoves$: BehaviorSubject<number[]>;
 
-  constructor() { }
+  constructor(
+    private chessS: ChessService,
+  ) { }
 
   ngOnInit(): void {
-    console.log({fields: this.fields});
+    this.fields$ = this.chessS.getFields$();
+    this.allowedMoves$ = this.chessS.getAllowedMoves$();
   }
 
-  public clickField(fieldID: number) {
-    console.log({fieldID});
+  public clickField(field: Field) {
+    this.chessS.currentPiece = field;
   }
 
 }

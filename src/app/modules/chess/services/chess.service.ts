@@ -1,21 +1,56 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of } from 'rxjs';
-import { Field } from '../types/types';
-import { range } from 'lodash';
+import { BehaviorSubject } from 'rxjs';
+import { Field, } from '../types/types';
+import { range, cloneDeep } from 'lodash';
+import { ChessMovesService } from './chess-moves.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChessService {
-  private fields$: Observable<Field[]>;
-  
-
-  constructor() {
-    this.initFields();
+  private fields: Field[];
+  private fields$: BehaviorSubject<Field[]> = new BehaviorSubject<Field[]>([]);
+  private allowedMoves$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
+  private _currentPiece: Field | null;
+  get currentPiece(): Field | null {
+    return this._currentPiece ? cloneDeep(this._currentPiece) : null;
   }
 
-  public getFields$(): Observable<Field[]> {
+  set currentPiece(field: Field | null) {
+    if (field?.piece && !this._currentPiece) {
+      this._currentPiece = field;
+      this.chessMovesS.calcAllowedMoves(field.id, this.fields);
+      return;
+    }
+
+    if (this._currentPiece && field) {
+      this.move(field);
+    }
+  }
+
+  private move(field: Field): void {
+    const currentFieldIndex = this.fields.findIndex(f => f.id === this._currentPiece?.id);
+    const nextFieldIndex = this.fields.findIndex(f => f.id === field.id);
+    if (currentFieldIndex !== -1 && nextFieldIndex !== -1) {
+      this.fields = this.chessMovesS.move(currentFieldIndex, nextFieldIndex, this.fields);
+      this.fields$.next(this.fields);
+      this._currentPiece = null;
+    }
+  }
+
+  constructor(
+    private chessMovesS: ChessMovesService,
+  ) {
+    this.initFields();
+    this.allowedMoves$ = this.chessMovesS.getAllowedMoves$();
+  }
+
+  public getFields$(): BehaviorSubject<Field[]> {
     return this.fields$
+  }
+
+  public getAllowedMoves$(): BehaviorSubject<number[]> {
+    return this.allowedMoves$;
   }
 
   private initFields(): void {
@@ -120,7 +155,8 @@ export class ChessService {
       type: 'rook'
     }
 
-    this.fields$ = of([...newFields]);
+    this.fields = [...newFields];
+    this.fields$.next(this.fields);
   }
 }
 
