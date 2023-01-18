@@ -10,6 +10,15 @@ export class ChessMovesService {
   private readonly indexRange: number[] = range(0, 64);
   private allowedMoves$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
 
+  private readonly moveMethods = {
+    [PieceType.pawn]: this.calcPawnMoves,
+    [PieceType.rook]: this.calcRookMoves,
+    [PieceType.bishop]: this.calcBishopMoves,
+    [PieceType.knight]: this.calcKnightMoves,
+    [PieceType.queen]: this.calcQueenMoves,
+    [PieceType.king]: this.calcKingMoves
+  };
+
   constructor() { };
 
   public getAllowedMoves$(): BehaviorSubject<number[]> {
@@ -47,24 +56,8 @@ export class ChessMovesService {
       return;
     }
 
-    let moves: number[] = [];
-
-    switch(fields[currentFieldIndex].piece?.type) {
-      case PieceType.pawn:
-        moves = [...this.calcPawnMoves(currentFieldIndex, fields)];
-        break;
-      case PieceType.rook:
-        moves = [...this.calcRookMoves(currentFieldIndex, fields)];
-        break;
-      case PieceType.bishop:
-        moves = [...this.calcBishopMoves(currentFieldIndex, fields)];
-        break;
-      case PieceType.queen:
-        moves = [...this.calcQueenMoves(currentFieldIndex, fields)];
-        break;
-      default:
-        moves = [];
-    }
+    const pieceType = fields[currentFieldIndex].piece?.type;
+    const moves: number[] = !isNil(pieceType) ? this.moveMethods[pieceType]?.(currentFieldIndex, fields) : [];
 
     this.allowedMoves$.next([...moves].filter(move => this.indexRange.includes(move)))
   }
@@ -86,20 +79,20 @@ export class ChessMovesService {
 
     const cutRightIndex = white ? index - 7 : index + 9;
     if (
-      fields[cutRightIndex]?.piece?.color !== fields[index].piece?.color
+      fields[index].piece?.color !== fields[cutRightIndex]?.piece?.color
       && !!fields[cutRightIndex]?.piece
       && (index + 1) % 8 !== 0
     ) {
-      moves.push(cutRightIndex)
+      moves.push(cutRightIndex);
     }
 
     const cutLeftIndex = white ? index - 9 : index + 7;
     if (
-      fields[cutLeftIndex]?.piece?.color !== fields[index].piece?.color
+      fields[index].piece?.color !== fields[cutLeftIndex]?.piece?.color
       && !!fields[cutLeftIndex]?.piece
       && index % 8 !== 0
     ) {
-      moves.push(cutLeftIndex)
+      moves.push(cutLeftIndex);
     }
 
     return moves;
@@ -161,8 +154,68 @@ export class ChessMovesService {
     return moves;
   }
 
+  private calcKnightMoves(index: number, fields: Field[]): number[] {
+    const moves: number[] = [];
+    const moveIndexes: number[] = [6, 10, 15, 17];
+    const farRight: number[] = [-15, -6, 10, 17];
+    const closeRight: number[] = [-6, 10];
+    const farLeft: number[] = [-17, -10, 6, 15];
+    const closeLeft: number[] = [-10, 6];
+
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < moveIndexes.length; j++) {
+
+        const calcIndex = moveIndexes[j] * (i % 2 === 0 ? 1 : -1);
+        const moveIndex = index + calcIndex;
+
+        if (moveIndex < 0 || moveIndex > 63) { continue; }
+
+        if (index % 8 === 0 && farLeft.includes(calcIndex)) { continue; }
+        if ((index - 1) % 8 === 0 && closeLeft.includes(calcIndex)) { continue; }
+
+        if ((index + 1) % 8 === 0 && farRight.includes(calcIndex)) { continue; }
+        if ((index + 2) % 8 === 0 && closeRight.includes(calcIndex)) { continue; }
+
+        if (fields[index].piece?.color !== fields[moveIndex].piece?.color) {
+          moves.push(moveIndex);
+        }
+
+      }
+    }
+
+    return moves;
+  }
+
   private calcQueenMoves(index: number, fields: Field[]): number[] {
     return [...this.calcBishopMoves(index, fields), ...this.calcRookMoves(index, fields)];
+  }
+
+  private calcKingMoves(index: number, fields: Field[]): number[] {
+    const moves: number[] = [];
+    const moveIndexes: number[] = [1, 7, 8, 9];
+    const left: number[] = [-9, -1, 7];
+    const right: number[] = [-7, 1, 9];
+
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < moveIndexes.length; j++) {
+
+        const calcIndex = moveIndexes[j] * (i % 2 === 0 ? 1 : -1);
+        const moveIndex = index + calcIndex;
+
+        if (moveIndex < 0 || moveIndex > 63) { continue; }
+
+        if (index % 8 === 0 && left.includes(calcIndex)) { continue; }
+
+        if ((index + 1) % 8 === 0 && right.includes(calcIndex)) { continue; }
+
+        if (fields[index].piece?.color !== fields[moveIndex].piece?.color) {
+          moves.push(moveIndex);
+        }
+
+      }
+    }
+
+    return moves;
   }
 
   private dynamicCalc(
@@ -180,6 +233,4 @@ export class ChessMovesService {
     moves.push(fieldIndex);
     return false;
   }
-
-
 }
