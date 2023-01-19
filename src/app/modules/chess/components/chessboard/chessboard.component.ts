@@ -11,6 +11,7 @@ import { Field } from '../../types/types';
 export class ChessboardComponent implements OnInit {
   public fields$: BehaviorSubject<Field[]>;
   public allowedMoves$: BehaviorSubject<number[]>;
+  public checkFieldIndex$: BehaviorSubject<number>;
 
   constructor(
     private chessS: ChessService,
@@ -19,6 +20,7 @@ export class ChessboardComponent implements OnInit {
   ngOnInit(): void {
     this.fields$ = this.chessS.getFields$();
     this.allowedMoves$ = this.chessS.getAllowedMoves$();
+    this.checkFieldIndex$ = this.chessS.getCheckFieldIndex$();
   }
 
   public clickField(field: Field) {

@@ -9,6 +9,7 @@ import { Field, Piece, PieceColor, PieceType } from '../types/types';
 export class ChessMovesService {
   private readonly indexRange: number[] = range(0, 64);
   private allowedMoves$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
+  private checkFieldIndex$: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
 
   private readonly moveMethods = {
     [PieceType.pawn]: this.calcPawnMoves,
@@ -23,6 +24,10 @@ export class ChessMovesService {
 
   public getAllowedMoves$(): BehaviorSubject<number[]> {
     return this.allowedMoves$;
+  }
+
+  public getCheckFieldIndex$(): BehaviorSubject<number> {
+    return this.checkFieldIndex$;
   }
 
   public move(
@@ -44,6 +49,8 @@ export class ChessMovesService {
     if (this.allowedMoves$.value.includes(nextPositionIndex)) {
       newFields[nextPositionIndex].piece = {...newFields[currentPositionIndex].piece} as Piece
       newFields[currentPositionIndex].piece = null;      
+      
+      this.checkFieldIndex$.next(this.calcCheck(nextPositionIndex, newFields));
     }
 
     this.allowedMoves$.next([]);
@@ -51,15 +58,47 @@ export class ChessMovesService {
     return newFields;
   }
 
+  private calcCheck(fieldIndex: number, fields: Field[]): number {
+    if (isNil(fieldIndex) || !fields || !this.indexRange.includes(fieldIndex)) { 
+      return -1;
+    }
+
+    if (!isNil(fields[fieldIndex].piece)) {
+      const pieceType = fields[fieldIndex].piece!.type;
+      const pieceColor = fields[fieldIndex].piece!.color;
+      
+      if (!this.moveMethods[pieceType]) { return -1; } 
+
+      const moveMethod = this.moveMethods[pieceType].bind(this);
+      const moves: number[] = moveMethod(fieldIndex, fields);
+
+      for (let index = 0; index < moves.length; index++) {
+        if (
+          fields[moves[index]].piece?.color !== pieceColor &&
+          fields[moves[index]].piece?.type === PieceType.king
+        ) {
+          return moves[index];
+        }
+      }
+    }
+
+    return -1;
+  }
+
   public calcAllowedMoves(currentFieldIndex: number, fields: Field[]) {
     if (isNil(currentFieldIndex) || !fields || !this.indexRange.includes(currentFieldIndex)) { 
       return;
     }
 
-    const pieceType = fields[currentFieldIndex].piece?.type;
-    const moves: number[] = !isNil(pieceType) ? this.moveMethods[pieceType]?.(currentFieldIndex, fields) : [];
+    if (!isNil(fields[currentFieldIndex].piece)) {
+      const pieceType = fields[currentFieldIndex].piece!.type;
+      
+      if (!this.moveMethods[pieceType]) { return; } 
 
-    this.allowedMoves$.next([...moves].filter(move => this.indexRange.includes(move)))
+      const moveMethod = this.moveMethods[pieceType].bind(this);
+      const moves: number[] = moveMethod(currentFieldIndex, fields);
+      this.allowedMoves$.next([...moves].filter(move => this.indexRange.includes(move)));      
+    }
   }
 
   private calcPawnMoves(index: number, fields: Field[]): number[] {

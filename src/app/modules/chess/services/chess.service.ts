@@ -8,10 +8,13 @@ import { ChessMovesService } from './chess-moves.service';
   providedIn: 'root'
 })
 export class ChessService {
-  private fields: Field[];
   private fields$: BehaviorSubject<Field[]> = new BehaviorSubject<Field[]>([]);
   private allowedMoves$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
+  private checkFieldIndex$: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
+
+  private fields: Field[];
   private _currentPiece: Field | null;
+
   get currentPiece(): Field | null {
     return this._currentPiece ? cloneDeep(this._currentPiece) : null;
   }
@@ -43,6 +46,7 @@ export class ChessService {
   ) {
     this.initFields();
     this.allowedMoves$ = this.chessMovesS.getAllowedMoves$();
+    this.checkFieldIndex$ = this.chessMovesS.getCheckFieldIndex$()
   }
 
   public getFields$(): BehaviorSubject<Field[]> {
@@ -51,6 +55,10 @@ export class ChessService {
 
   public getAllowedMoves$(): BehaviorSubject<number[]> {
     return this.allowedMoves$;
+  }
+
+  public getCheckFieldIndex$(): BehaviorSubject<number> {
+    return this.checkFieldIndex$;
   }
 
   private initFields(): void {
