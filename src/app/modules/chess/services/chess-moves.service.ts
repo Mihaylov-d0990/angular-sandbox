@@ -30,6 +30,42 @@ export class ChessMovesService {
     return this.checkFieldIndex$;
   }
 
+  public isCheckmate(color: keyof typeof PieceColor, fields: Field[]): boolean {
+    const piecesIndexes: number[] = fields.filter(
+      (f: Field) => f.piece?.color === color
+    ).map((f: Field) => f.id);
+    
+    return !!piecesIndexes.find((index: number) => this.calcAllowedMoves(index, fields, true)!.length);
+  }
+
+  public calcAllowedMoves(currentIndex: number, fields: Field[], returnMoves?: boolean): number[] | void {
+    if (!isNil(fields[currentIndex].piece)) {
+      const pieceType = fields[currentIndex].piece!.type;
+      
+      if (!this.moveMethods[pieceType]) { return; } 
+
+      const moveMethod = this.moveMethods[pieceType].bind(this);
+
+      const moves: number[] = moveMethod(
+        currentIndex, fields
+      ).filter(
+        index => this.isNextMoveNotBeCheck(currentIndex, index, fields)
+      );
+
+      const checkIndex = this.calcCheck(currentIndex, fields)
+
+      if (checkIndex !== -1) {
+        moves.splice(moves.findIndex(move => move === checkIndex), 1);
+      }
+
+      const resultMoves = [...moves].filter(move => this.indexRange.includes(move));
+      if (returnMoves) {
+        return resultMoves;
+      }
+      this.allowedMoves$.next(resultMoves);      
+    }
+  }
+
   public move(currentIndex: number, nextIndex: number, fields: Field[]): Field[]  {
     const newFields = cloneDeep(fields);
 
@@ -54,10 +90,6 @@ export class ChessMovesService {
   }
 
   private calcCheck(fieldIndex: number, fields: Field[]): number {
-    if (isNil(fieldIndex) || !fields || !this.indexRange.includes(fieldIndex)) { 
-      return -1;
-    }
-
     if (!isNil(fields[fieldIndex].piece)) {
       const pieceType = fields[fieldIndex].piece!.type;
       const pieceColor = fields[fieldIndex].piece!.color;
@@ -65,7 +97,7 @@ export class ChessMovesService {
       if (!this.moveMethods[pieceType]) { return -1; } 
 
       const moveMethod = this.moveMethods[pieceType].bind(this);
-      const moves: number[] = moveMethod(fieldIndex, fields);
+      const moves = moveMethod(fieldIndex, fields);
 
       for (let index = 0; index < moves.length; index++) {
         if (
@@ -89,30 +121,6 @@ export class ChessMovesService {
     ).map(field => field.id);
 
     return !differentColorPiecesIndexes.find(index => this.calcCheck(index, newFields) !== -1);
-  }
-
-  public calcAllowedMoves(currentIndex: number, fields: Field[]) {
-    if (!isNil(fields[currentIndex].piece)) {
-      const pieceType = fields[currentIndex].piece!.type;
-      
-      if (!this.moveMethods[pieceType]) { return; } 
-
-      const moveMethod = this.moveMethods[pieceType].bind(this);
-
-      const moves: number[] = moveMethod(
-        currentIndex, fields
-      ).filter(
-        index => this.isNextMoveNotBeCheck(currentIndex, index, fields)
-      );
-
-      const checkIndex = this.calcCheck(currentIndex, fields)
-
-      if (checkIndex !== -1) {
-        moves.splice(moves.findIndex(move => move === checkIndex), 1);
-      }
-
-      this.allowedMoves$.next([...moves].filter(move => this.indexRange.includes(move)));      
-    }
   }
 
   private calcPawnMoves(index: number, fields: Field[]): number[] {

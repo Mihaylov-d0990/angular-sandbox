@@ -35,6 +35,10 @@ export class ChessService {
         this.turn = this.turn === PieceColor.white ? PieceColor.black : PieceColor.white;
       }
 
+      if (this.chessMovesS.isCheckmate(this.turn, this.fields)) {
+        console.warn('Checkmate');
+      }
+
       this.fields = newFields;
       this.fields$.next(this.fields);
       this.currentPiece = null;
