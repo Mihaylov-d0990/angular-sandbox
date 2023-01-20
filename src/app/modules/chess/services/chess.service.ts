@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Field, } from '../types/types';
-import { range } from 'lodash';
+import { Field, PieceColor, } from '../types/types';
+import { isEqual, range } from 'lodash';
 import { ChessMovesService } from './chess-moves.service';
 
 @Injectable({
@@ -11,9 +11,10 @@ export class ChessService {
   private fields$: BehaviorSubject<Field[]> = new BehaviorSubject<Field[]>([]);
   private fields: Field[];
   private currentPiece: Field | null;
+  private turn: keyof typeof PieceColor = PieceColor.white;
 
-  public setCurrentPiece(field: Field | null) {
-    if (field?.piece) {
+  public setCurrentPiece(field: Field) {
+    if (field.piece && field.piece.color === this.turn) {
       this.currentPiece = field;
       this.chessMovesS.calcAllowedMoves(field.id, this.fields);
       return;
@@ -25,10 +26,16 @@ export class ChessService {
   }
 
   private move(field: Field): void {
-    const currentFieldIndex = this.fields.findIndex(f => f.id === this.currentPiece?.id);
-    const nextFieldIndex = this.fields.findIndex(f => f.id === field.id);
-    if (currentFieldIndex !== -1 && nextFieldIndex !== -1) {
-      this.fields = this.chessMovesS.move(currentFieldIndex, nextFieldIndex, this.fields);
+    const currentIndex = this.fields.findIndex(f => f.id === this.currentPiece?.id);
+    const nextIndex = this.fields.findIndex(f => f.id === field.id);
+    if (currentIndex !== -1 && nextIndex !== -1) {
+      const newFields = this.chessMovesS.move(currentIndex, nextIndex, this.fields);
+
+      if (!isEqual(this.fields, newFields)) {
+        this.turn = this.turn === PieceColor.white ? PieceColor.black : PieceColor.white;
+      }
+
+      this.fields = newFields;
       this.fields$.next(this.fields);
       this.currentPiece = null;
     }

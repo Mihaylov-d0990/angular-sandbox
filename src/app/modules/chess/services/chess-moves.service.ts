@@ -20,7 +20,7 @@ export class ChessMovesService {
     [PieceType.king]: this.calcKingMoves
   };
 
-  constructor() { };
+  constructor() {};
 
   public getAllowedMoves$(): BehaviorSubject<number[]> {
     return this.allowedMoves$;
@@ -30,30 +30,25 @@ export class ChessMovesService {
     return this.checkFieldIndex$;
   }
 
-  public move(
-    currentPositionIndex: number,
-    nextPositionIndex: number,
-    fields: Field[]
-  ): Field[]  {
+  public move(currentIndex: number, nextIndex: number, fields: Field[]): Field[]  {
     const newFields = cloneDeep(fields);
 
-    if (
-      isNil(currentPositionIndex) 
-      || isNil(nextPositionIndex)
-    ) { return newFields; }
-    
-    if (newFields[currentPositionIndex].piece?.color === newFields[nextPositionIndex].piece?.color) {
-      return newFields;
-    }
-
-    if (this.allowedMoves$.value.includes(nextPositionIndex)) {
-      newFields[nextPositionIndex].piece = {...newFields[currentPositionIndex].piece} as Piece
-      newFields[currentPositionIndex].piece = null;      
-      
-      this.checkFieldIndex$.next(this.calcCheck(nextPositionIndex, newFields));
+    if (this.allowedMoves$.value.includes(nextIndex)) {
+      newFields[nextIndex].piece = {...newFields[currentIndex].piece} as Piece
+      newFields[currentIndex].piece = null;      
+      this.checkFieldIndex$.next(this.calcCheck(nextIndex, newFields));
     }
 
     this.allowedMoves$.next([]);
+    
+    return newFields;
+  }
+
+  private fakeMove(currentIndex: number, nextIndex: number, fields: Field[]): Field[] {
+    const newFields = cloneDeep(fields);
+
+    newFields[nextIndex].piece = {...newFields[currentIndex].piece} as Piece
+    newFields[currentIndex].piece = null; 
     
     return newFields;
   }
@@ -85,19 +80,32 @@ export class ChessMovesService {
     return -1;
   }
 
-  public calcAllowedMoves(currentFieldIndex: number, fields: Field[]) {
-    if (isNil(currentFieldIndex) || !fields || !this.indexRange.includes(currentFieldIndex)) { 
-      return;
-    }
+  private isNextMoveNotBeCheck(currentIndex: number, nextIndex: number, fields: Field[]) {
+    const newFields: Field[] = this.fakeMove(currentIndex, nextIndex, fields);
+    const color: keyof typeof PieceColor = newFields[nextIndex].piece!.color;
 
-    if (!isNil(fields[currentFieldIndex].piece)) {
-      const pieceType = fields[currentFieldIndex].piece!.type;
+    const differentColorPiecesIndexes: number[] = fields.filter(
+      field => field.piece && field.piece.color !== color ? true : false
+    ).map(field => field.id);
+
+    return !differentColorPiecesIndexes.find(index => this.calcCheck(index, newFields) !== -1);
+  }
+
+  public calcAllowedMoves(currentIndex: number, fields: Field[]) {
+    if (!isNil(fields[currentIndex].piece)) {
+      const pieceType = fields[currentIndex].piece!.type;
       
       if (!this.moveMethods[pieceType]) { return; } 
 
       const moveMethod = this.moveMethods[pieceType].bind(this);
-      const moves: number[] = moveMethod(currentFieldIndex, fields);
-      const checkIndex = this.calcCheck(currentFieldIndex, fields)
+
+      const moves: number[] = moveMethod(
+        currentIndex, fields
+      ).filter(
+        index => this.isNextMoveNotBeCheck(currentIndex, index, fields)
+      );
+
+      const checkIndex = this.calcCheck(currentIndex, fields)
 
       if (checkIndex !== -1) {
         moves.splice(moves.findIndex(move => move === checkIndex), 1);
@@ -264,14 +272,9 @@ export class ChessMovesService {
     return moves;
   }
 
-  private dynamicCalc(
-    moves: number[],
-    fields: Field[],
-    currentFieldIndex: number,
-    fieldIndex: number
-  ): boolean {
+  private dynamicCalc(moves: number[], fields: Field[], currentIndex: number, fieldIndex: number): boolean {
     if (!!fields[fieldIndex].piece) {
-      if (fields[fieldIndex].piece?.color !== fields[currentFieldIndex].piece?.color) {
+      if (fields[fieldIndex].piece?.color !== fields[currentIndex].piece?.color) {
         moves.push(fieldIndex);
       }
       return true;
