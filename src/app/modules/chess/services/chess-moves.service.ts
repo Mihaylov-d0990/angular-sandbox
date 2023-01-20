@@ -35,7 +35,7 @@ export class ChessMovesService {
       (f: Field) => f.piece?.color === color
     ).map((f: Field) => f.id);
     
-    return !!piecesIndexes.find((index: number) => this.calcAllowedMoves(index, fields, true)!.length);
+    return !piecesIndexes.filter((index: number) => this.calcAllowedMoves(index, fields, true)!.length).length;
   }
 
   public calcAllowedMoves(currentIndex: number, fields: Field[], returnMoves?: boolean): number[] | void {
