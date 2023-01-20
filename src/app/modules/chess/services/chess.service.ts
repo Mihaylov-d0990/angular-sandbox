@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Field, } from '../types/types';
-import { range, cloneDeep } from 'lodash';
+import { range } from 'lodash';
 import { ChessMovesService } from './chess-moves.service';
 
 @Injectable({
@@ -9,35 +9,28 @@ import { ChessMovesService } from './chess-moves.service';
 })
 export class ChessService {
   private fields$: BehaviorSubject<Field[]> = new BehaviorSubject<Field[]>([]);
-  private allowedMoves$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([]);
-  private checkFieldIndex$: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
-
   private fields: Field[];
-  private _currentPiece: Field | null;
+  private currentPiece: Field | null;
 
-  get currentPiece(): Field | null {
-    return this._currentPiece ? cloneDeep(this._currentPiece) : null;
-  }
-
-  set currentPiece(field: Field | null) {
-    if (field?.piece && !this._currentPiece) {
-      this._currentPiece = field;
+  public setCurrentPiece(field: Field | null) {
+    if (field?.piece) {
+      this.currentPiece = field;
       this.chessMovesS.calcAllowedMoves(field.id, this.fields);
       return;
     }
 
-    if (this._currentPiece && field) {
+    if (this.currentPiece && field) {
       this.move(field);
     }
   }
 
   private move(field: Field): void {
-    const currentFieldIndex = this.fields.findIndex(f => f.id === this._currentPiece?.id);
+    const currentFieldIndex = this.fields.findIndex(f => f.id === this.currentPiece?.id);
     const nextFieldIndex = this.fields.findIndex(f => f.id === field.id);
     if (currentFieldIndex !== -1 && nextFieldIndex !== -1) {
       this.fields = this.chessMovesS.move(currentFieldIndex, nextFieldIndex, this.fields);
       this.fields$.next(this.fields);
-      this._currentPiece = null;
+      this.currentPiece = null;
     }
   }
 
@@ -45,8 +38,6 @@ export class ChessService {
     private chessMovesS: ChessMovesService,
   ) {
     this.initFields();
-    this.allowedMoves$ = this.chessMovesS.getAllowedMoves$();
-    this.checkFieldIndex$ = this.chessMovesS.getCheckFieldIndex$()
   }
 
   public getFields$(): BehaviorSubject<Field[]> {
@@ -54,11 +45,11 @@ export class ChessService {
   }
 
   public getAllowedMoves$(): BehaviorSubject<number[]> {
-    return this.allowedMoves$;
+    return this.chessMovesS.getAllowedMoves$();
   }
 
   public getCheckFieldIndex$(): BehaviorSubject<number> {
-    return this.checkFieldIndex$;
+    return this.chessMovesS.getCheckFieldIndex$()
   }
 
   private initFields(): void {

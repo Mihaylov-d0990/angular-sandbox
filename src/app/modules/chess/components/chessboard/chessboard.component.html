@@ -1,6 +1,9 @@
 <chessfield
-  *ngFor="let field of (fields$ | async) ?? []"
+  *ngFor="let field of ((fields$ | async) ?? []); let index = index"
   (click)="clickField(field)"
-  [ngClass]="{'allowed-move': ((allowedMoves$ | async) ?? []).includes(field.id)}"
+  [ngClass]="{
+    'allowed-move': ((allowedMoves$ | async) ?? []).includes(field.id),
+    'check': (checkFieldIndex$ | async) === index
+  }"
   [data]="field"
 ></chessfield>

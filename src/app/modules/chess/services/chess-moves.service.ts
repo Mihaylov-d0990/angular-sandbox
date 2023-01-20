@@ -97,6 +97,12 @@ export class ChessMovesService {
 
       const moveMethod = this.moveMethods[pieceType].bind(this);
       const moves: number[] = moveMethod(currentFieldIndex, fields);
+      const checkIndex = this.calcCheck(currentFieldIndex, fields)
+
+      if (checkIndex !== -1) {
+        moves.splice(moves.findIndex(move => move === checkIndex), 1);
+      }
+
       this.allowedMoves$.next([...moves].filter(move => this.indexRange.includes(move)));      
     }
   }
@@ -107,13 +113,14 @@ export class ChessMovesService {
     const firstMove = white ? 47 < index && index < 56 : 7 < index && index < 16;
 
     const oneStepIndex = white ? index - 8 : index + 8;
+    const twoStepIndex = white ? index - 16 : index + 16
+
     if (!fields[oneStepIndex]?.piece) {
       moves.push(oneStepIndex);
-    }
 
-    const twoStepIndex = white ? index - 16 : index + 16
-    if (firstMove && !fields[twoStepIndex]?.piece) {
-      moves.push(twoStepIndex);
+      if (firstMove && !fields[twoStepIndex]?.piece) {
+        moves.push(twoStepIndex);
+      }
     }
 
     const cutRightIndex = white ? index - 7 : index + 9;

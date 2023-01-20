@@ -24,7 +24,6 @@ export class ChessboardComponent implements OnInit {
   }
 
   public clickField(field: Field) {
-    this.chessS.currentPiece = field;
+    this.chessS.setCurrentPiece(field);
   }
-
 }
