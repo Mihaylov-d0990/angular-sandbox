@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ChessModule } from './modules/chess/chess.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { AdvancedTodolistModule } from './modules/advanced-todolist/advanced-todolist.module';
 
 @NgModule({
   declarations: [
@@ -14,6 +15,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     BrowserModule,
     AppRoutingModule,
     ChessModule,
+    AdvancedTodolistModule,
     BrowserAnimationsModule,
   ],
   providers: [],
