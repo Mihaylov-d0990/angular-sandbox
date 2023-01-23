@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
+import { getFirestore, collection, getDocs, addDoc } from 'firebase/firestore/lite';
 import { from, map, Observable } from 'rxjs';
-import { TodoItem } from '../types/types';
+import { ITodoItem, TodoItem } from '../types/types';
 
 @Injectable({
   providedIn: 'root'
@@ -23,12 +23,18 @@ export class TodolistService {
     this.dataBase = getFirestore(initializeApp(firebaseConfig));
   }
 
-  public getTodoItems(): Observable<any> {
+  public getTodoItems(): Observable<ITodoItem[]> {
     return from(
       getDocs(collection(this.dataBase, 'todolist'))
     ).pipe(
       map(todosSnapshot => todosSnapshot.docs.map((todo: any) => new TodoItem(todo.data())))
-    )
+    );
+  }
+
+  public addTodoItem(todo: ITodoItem): Observable<any> {
+    return from(
+      addDoc(collection(this.dataBase, 'todolist'), todo)
+    );
   }
 
 }
