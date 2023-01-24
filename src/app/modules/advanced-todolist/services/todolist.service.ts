@@ -23,7 +23,7 @@ export class TodolistService {
     this.dataBase = getFirestore(initializeApp(firebaseConfig));
   }
 
-  public getTodoItems(): Observable<ITodoItem[]> {
+  public getTodoItems$(): Observable<ITodoItem[]> {
     return from(
       getDocs(collection(this.dataBase, 'todolist'))
     ).pipe(
@@ -31,10 +31,40 @@ export class TodolistService {
     );
   }
 
-  public addTodoItem(todo: ITodoItem): Observable<any> {
+  public addTodoItem$(todo: ITodoItem): Observable<any> {
     return from(
       addDoc(collection(this.dataBase, 'todolist'), todo)
     );
+  }
+
+  public getYear$(): Observable<number[]> {
+    return from(
+      getDocs(collection(this.dataBase, 'years'))
+    ).pipe(
+      map(yearsSnapshot => {
+        return yearsSnapshot.docs.map((year: any) => year.data()?.year)
+          .filter(year => !!year).sort();
+      })
+    );
+  }
+
+  public addYear$(years: number[]): Observable<number[]> {
+    const maxYear = Math.max(...years);
+    const newYear = maxYear ? maxYear + 1 : new Date().getFullYear();
+    return new Observable(observer => {
+      from(
+        addDoc(collection(this.dataBase, 'years'), {year: newYear})
+      ).subscribe({
+        next: () => {
+          observer.next([...years, newYear].sort());
+          observer.complete();
+        },
+        error: error => {
+          observer.error(error);
+          observer.complete();
+        }
+      });
+    })
   }
 
 }

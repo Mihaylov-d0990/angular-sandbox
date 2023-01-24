@@ -1,1 +1,7 @@
-<p>todolist works!</p>
+<div>
+  <mat-selection-list>
+    <mat-list-option *ngFor="let todo of todos">
+      {{todo.text}}
+    </mat-list-option>
+  </mat-selection-list>
+</div>

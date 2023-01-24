@@ -16,7 +16,6 @@ export class TodoItem implements ITodoItem {
   constructor(object: any) {
     for(const key in object) {
       if (Object.prototype.hasOwnProperty.call(object, key)) {
-        console.log(key);
         switch (key) {
           case 'datetime':
             this[key] = object[key] ? object[key].seconds ? new Date(object[key].seconds) : object[key] : null;

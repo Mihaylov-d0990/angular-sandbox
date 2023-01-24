@@ -4,7 +4,9 @@ import { AdvancedTodolistComponent } from './advanced-todolist.component';
 import { TodolistComponent } from './components/todolist/todolist.component';
 import { DatePickerComponent } from './components/date-picker/date-picker.component';
 import { TodolistService } from './services/todolist.service';
-
+import { MatListModule } from '@angular/material/list';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 
 @NgModule({
@@ -14,7 +16,10 @@ import { TodolistService } from './services/todolist.service';
     DatePickerComponent
   ],
   imports: [
-    CommonModule
+    CommonModule,
+    MatListModule,
+    MatButtonModule,
+    MatIconModule
   ],
   exports: [
     AdvancedTodolistComponent

@@ -1,1 +1,10 @@
-<p>date-picker works!</p>
+<mat-nav-list>
+  <mat-list-item *ngFor="let year of years">
+    {{year}}
+  </mat-list-item>
+</mat-nav-list>
+<mat-nav-list>
+  <mat-list-item class="add-button" (click)="addYear()">
+    <mat-icon>add</mat-icon>
+  </mat-list-item>
+</mat-nav-list>

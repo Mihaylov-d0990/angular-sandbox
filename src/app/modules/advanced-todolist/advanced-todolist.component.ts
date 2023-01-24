@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TodolistService } from './services/todolist.service';
+import { ITodoItem } from './types/types';
 
 @Component({
   selector: 'advanced-todolist',
@@ -12,19 +13,37 @@ export class AdvancedTodolistComponent implements OnInit {
     private todolistS: TodolistService,
   ) { }
 
+  public todos: ITodoItem[] | null = null;
+  public years: number[] = [];
+
   ngOnInit(): void {
-    // this.todolistS.addTodoItem({
-    //   id: 1,
-    //   datetime: new Date(),
-    //   text: 'test 1',
-    //   completed: true,
-    //   extra: 'extra info'
-    // })
-    this.todolistS.getTodoItems().subscribe({
-      next: todos => {
-        console.log({todos});
-      }
-    })
+    this.initializeTodos();
+    this.initializeYears();
+  }
+
+  public addNewYear() {
+    this.todolistS.addYear$(this.years)
+    .subscribe({
+      next: years => this.years = years,
+      error: error => console.error(error)
+    });
+  }
+
+  private initializeTodos() {
+    this.todos = null;
+    this.todolistS.getTodoItems$()
+    .subscribe({
+      next: todos => this.todos = todos,
+      error: error => console.error(error)
+    });
+  }
+
+  private initializeYears() {
+    this.todolistS.getYear$()
+    .subscribe({
+      next: years => this.years = years,
+      error: error => console.error(error)
+    });
   }
 
 }
