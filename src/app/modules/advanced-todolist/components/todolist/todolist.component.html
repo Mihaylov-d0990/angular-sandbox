@@ -1,7 +1,10 @@
-<mat-form-field appearance="fill">
-  <mat-label>New todo</mat-label>
-  <input matInput>
-</mat-form-field>
+<form [formGroup]="form">
+  <mat-form-field appearance="fill">
+    <mat-label>New todo</mat-label>
+    <input formControlName="todo" matInput>
+  </mat-form-field>
+</form>
+
 <div>
   <mat-selection-list>
     <mat-list-option *ngFor="let todo of todos">
